@@ -24,6 +24,7 @@ int segmentId;
 int *matrixOne, *matrixTwo, *outputMatrix;
 
 void loadMatrixValues(void);
+void printMatrix(void);
 
 int main(int argc, char *argv[]){
 
@@ -56,21 +57,22 @@ int main(int argc, char *argv[]){
 	}
 
 	loadMatrixValues();
-	segmentId = shmget(IPC_PRIVATE, sizeof((*outputMatrix) * numberRowsMatrixOne * numberColsMatrixTwo), S_IRUSR | S_IWUSR);
+	// segmentId = shmget(IPC_PRIVATE, sizeof((*outputMatrix) * numberRowsMatrixOne * numberColsMatrixTwo), S_IRUSR | S_IWUSR);
 
-	int i;
+	// int i;
+	// for (i = 0; i < numberOfProcesses; i++){
+	// 	pid_t forkPid;
+	// 	forkPid = fork();
+	// 	if(forkPid < 0){
+	// 		printf("\nError in forking process\n");
+	// 		return -1;
 
-
-	for(i=0; i<numberOfProcesses; i++){
-		pid_t forkId = fork();
-
-		if(forkId < 0){
-			printf("\nError in fork\n");
-			return -1;
-		}else if(forkId > 0){
-
-		}
-	}
+	// 	}else if(forkPid == 0){ // child process
+	// 		printf("Im a child\n");
+	// 		exit(0);
+	// 	}
+	// }
+	
 
 	return 0;
 }
@@ -84,12 +86,26 @@ void loadMatrixValues(){
 	int i, j;
 	for(i = 0; i < numberRowsMatrixOne; i++){
 		for(j = 0; j < numberColsMatrixOne; j++){
-			fscanf(inFileMatrixOne, "%d", &matrixOne[i*numberColsMatrixOne + numberRowsMatrixOne]);
+			fscanf(inFileMatrixOne, "%d", &matrixOne[i*numberColsMatrixOne + j]);
 		}
 	}
 	for(i = 0; i < numberRowsMatrixTwo; i++){
 		for(j = 0; j < numberColsMatrixTwo; j++){
-			fscanf(inFileMatrixTwo, "%d", &matrixTwo[i*numberColsMatrixTwo + numberRowsMatrixTwo]);
+			fscanf(inFileMatrixTwo, "%d", &matrixTwo[i*numberColsMatrixTwo + j]);
+		}
+	}
+}
+
+void printMatrix(){
+	int i, j;
+	for(i = 0; i < numberRowsMatrixOne; i++){
+		for(j = 0; j < numberColsMatrixOne; j++){
+			printf("%d\n", matrixOne[i*numberColsMatrixOne + j] );
+		}
+	}
+	for(i = 0; i < numberRowsMatrixTwo; i++){
+		for(j = 0; j < numberColsMatrixTwo; j++){
+			printf("%d\n", matrixTwo[i*numberColsMatrixTwo + j]);
 		}
 	}
 }
