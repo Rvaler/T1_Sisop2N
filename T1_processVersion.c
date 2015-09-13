@@ -11,6 +11,14 @@ processos UNIX e outra utilizando pthreads. Os programas deverão executar obrig
 ambientes Unix (Linux) mesmo que tenham sido desenvolvidos sobre outras plataformas
 */
 
+
+
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h> /* for pid_t */
+#include <sys/wait.h> /* for wait */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/shm.h> 
@@ -23,8 +31,14 @@ int numberOfProcesses; // indicated in the call
 int segmentId;
 int *matrixOne, *matrixTwo, *outputMatrix;
 
+
+
 void loadMatrixValues(void);
 void printMatrix(void);
+void apllyMatrixMultiplication(int row);
+void multiplyAux(int row, int col);
+void saveResults();
+void multiplyElement(int elementRow, int elementCol);
 
 int main(int argc, char *argv[]){
 
@@ -57,24 +71,106 @@ int main(int argc, char *argv[]){
 	}
 
 	loadMatrixValues();
-	// segmentId = shmget(IPC_PRIVATE, sizeof((*outputMatrix) * numberRowsMatrixOne * numberColsMatrixTwo), S_IRUSR | S_IWUSR);
-
-	// int i;
-	// for (i = 0; i < numberOfProcesses; i++){
-	// 	pid_t forkPid;
-	// 	forkPid = fork();
-	// 	if(forkPid < 0){
-	// 		printf("\nError in forking process\n");
-	// 		return -1;
-
-	// 	}else if(forkPid == 0){ // child process
-	// 		printf("Im a child\n");
-	// 		exit(0);
-	// 	}
-	// }
 	
 
+	///// at'e aqui ta funcionando
+
+	segmentId = shmget(IPC_PRIVATE, sizeof((*outputMatrix) * numberRowsMatrixOne * numberColsMatrixTwo), S_IRUSR | S_IWUSR);
+	
+	int childController = 0;
+	int i;
+	for (i = 0; i < numberOfProcesses; i++){
+		pid_t forkPid;
+		forkPid = fork();
+		if(forkPid < 0){
+			printf("\nError in forking process\n");
+			return -1;
+
+		}else if(forkPid == 0){ // child process
+			printf("Im a child\n");
+			apllyMatrixMultiplication(i);
+			exit(0);
+		}
+	}
+	// isso n da certo
+	// if (childController == numberOfProcesses){
+	// 	printf("ENTROU\n");
+	// 	saveResults();
+	// }
+
+	int status, p;
+	for (p = 0; p < numberOfProcesses; ++p)
+		wait(&status);
+	outputMatrix = (int *) shmat(segmentId, NULL, 0);
+	printMatrix();
+	shmdt(outputMatrix);
+	// printMatrix();
+	//saveResults();
 	return 0;
+}
+
+void saveResults(){
+	outputMatrix = (int *) shmat(segmentId, NULL, 0);
+	fprintf(outputFileResultMatrix, "LINHAS = %d\nCOLUNAS = %d\n", numberRowsMatrixOne, numberColsMatrixTwo);
+	int i, j;
+	for (i = 0; i < numberRowsMatrixOne; i++){
+		for (j = 0; j < numberColsMatrixTwo; j++){
+			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j]);
+			fprintf(outputFileResultMatrix, "%d", outputMatrix[i*numberColsMatrixTwo + j]);
+		}
+		fprintf(outputFileResultMatrix, "\n");
+	}
+	shmdt(outputMatrix);
+	shmctl(segmentId, IPC_RMID, NULL);
+}
+
+
+
+// M x  K    K x N
+void apllyMatrixMultiplication(int element){
+	outputMatrix = (int*) shmat(segmentId, NULL, 0);
+
+	while(element < numberRowsMatrixOne*numberColsMatrixTwo){
+		printf("Process %i\n", element);
+		printf("row: %i\n", element / numberRowsMatrixOne);
+		printf("col: %i\n", element % numberColsMatrixTwo);
+		int elementCol = element % numberColsMatrixTwo;
+		int elementRow = element / numberRowsMatrixOne;
+		multiplyElement(elementRow, elementCol);
+		element += numberOfProcesses;
+	}
+	shmdt(outputMatrix);
+}
+
+void multiplyElement(int elementRow, int elementCol){
+	int i, j, value = 0;
+	for(i = 0; i < numberRowsMatrixOne; i++){
+		for(j = 0; j < numberColsMatrixTwo; j++){
+			value += matrixOne[elementRow*numberColsMatrixTwo + i] *
+			matrixTwo[elementCol*numberRowsMatrixOne + j];
+		}
+	}
+	outputMatrix[elementRow*numberColsMatrixTwo + elementCol] = value;
+}
+	// int col;
+	// while(row < numberRowsMatrixOne){
+	// 	for(col = 0; col < numberColsMatrixTwo; col++){
+	// 		multiplyAux(row, col);
+	// 	}
+	// 	row = row + numberOfProcesses; // permite que os processos trabalhem de forma proporcional
+	// }
+	// shmdt(outputMatrix);
+
+
+void multiplyAux(int row, int col){
+	int i, value = 0;
+	for (i = 0; i < numberColsMatrixOne; i++){
+		value = value + matrixOne[row * numberColsMatrixOne + i] +
+				matrixTwo[i * numberColsMatrixTwo + col];
+	}
+	printf("valor %i\n", value);
+	outputMatrix[row * numberColsMatrixTwo + col] = value;
+	printf("matriz %i\n", outputMatrix[row * numberColsMatrixTwo + col]);
 }
 
 // creating and filling matrixes
@@ -100,12 +196,20 @@ void printMatrix(){
 	int i, j;
 	for(i = 0; i < numberRowsMatrixOne; i++){
 		for(j = 0; j < numberColsMatrixOne; j++){
-			printf("%d\n", matrixOne[i*numberColsMatrixOne + j] );
+			printf("lala\n");
+			printf("%i\n", outputMatrix[i*numberColsMatrixOne + j] );
 		}
 	}
-	for(i = 0; i < numberRowsMatrixTwo; i++){
-		for(j = 0; j < numberColsMatrixTwo; j++){
-			printf("%d\n", matrixTwo[i*numberColsMatrixTwo + j]);
-		}
-	}
+
+	// int i, j;
+	// for(i = 0; i < numberRowsMatrixOne; i++){
+	// 	for(j = 0; j < numberColsMatrixOne; j++){
+	// 		printf("%d\n", matrixOne[i*numberColsMatrixOne + j] );
+	// 	}
+	// }
+	// for(i = 0; i < numberRowsMatrixTwo; i++){
+	// 	for(j = 0; j < numberColsMatrixTwo; j++){
+	// 		printf("%d\n", matrixTwo[i*numberColsMatrixTwo + j]);
+	// 	}
+	// }
 }
