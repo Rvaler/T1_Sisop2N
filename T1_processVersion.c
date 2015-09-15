@@ -71,9 +71,6 @@ int main(int argc, char *argv[]){
 	}
 
 	loadMatrixValues();
-	
-
-	///// at'e aqui ta funcionando
 
 	segmentId = shmget(IPC_PRIVATE, sizeof((*outputMatrix) * numberRowsMatrixOne * numberColsMatrixTwo), S_IRUSR | S_IWUSR);
 	
@@ -104,36 +101,30 @@ int main(int argc, char *argv[]){
 	outputMatrix = (int *) shmat(segmentId, NULL, 0);
 	printMatrix();
 	shmdt(outputMatrix);
-	// printMatrix();
 	//saveResults();
 	return 0;
 }
 
-void saveResults(){
-	outputMatrix = (int *) shmat(segmentId, NULL, 0);
-	fprintf(outputFileResultMatrix, "LINHAS = %d\nCOLUNAS = %d\n", numberRowsMatrixOne, numberColsMatrixTwo);
-	int i, j;
-	for (i = 0; i < numberRowsMatrixOne; i++){
-		for (j = 0; j < numberColsMatrixTwo; j++){
-			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j]);
-			fprintf(outputFileResultMatrix, "%d", outputMatrix[i*numberColsMatrixTwo + j]);
-		}
-		fprintf(outputFileResultMatrix, "\n");
-	}
-	shmdt(outputMatrix);
-	shmctl(segmentId, IPC_RMID, NULL);
-}
+// void saveResults(){
+// 	outputMatrix = (int *) shmat(segmentId, NULL, 0);
+// 	fprintf(outputFileResultMatrix, "LINHAS = %d\nCOLUNAS = %d\n", numberRowsMatrixOne, numberColsMatrixTwo);
+// 	int i, j;
+// 	for (i = 0; i < numberRowsMatrixOne; i++){
+// 		for (j = 0; j < numberColsMatrixTwo; j++){
+// 			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j]);
+// 			fprintf(outputFileResultMatrix, "%d", outputMatrix[i*numberColsMatrixTwo + j]);
+// 		}
+// 		fprintf(outputFileResultMatrix, "\n");
+// 	}
+// 	shmdt(outputMatrix);
+// 	shmctl(segmentId, IPC_RMID, NULL);
+// }
 
 
-
-// M x  K    K x N
 void apllyMatrixMultiplication(int element){
 	outputMatrix = (int*) shmat(segmentId, NULL, 0);
 
 	while(element < numberRowsMatrixOne*numberColsMatrixTwo){
-		printf("Process %i\n", element);
-		printf("row: %i\n", element / numberRowsMatrixOne);
-		printf("col: %i\n", element % numberColsMatrixTwo);
 		int elementCol = element % numberColsMatrixTwo;
 		int elementRow = element / numberRowsMatrixOne;
 		multiplyElement(elementRow, elementCol);
@@ -144,33 +135,11 @@ void apllyMatrixMultiplication(int element){
 
 void multiplyElement(int elementRow, int elementCol){
 	int i, j, value = 0;
-	for(i = 0; i < numberRowsMatrixOne; i++){
-		for(j = 0; j < numberColsMatrixTwo; j++){
-			value += matrixOne[elementRow*numberColsMatrixTwo + i] *
-			matrixTwo[elementCol*numberRowsMatrixOne + j];
-		}
+	for(i = 0; i < numberColsMatrixOne; i++){
+		value += matrixOne[elementRow*numberColsMatrixOne + i] * 
+				 matrixTwo[i*numberColsMatrixTwo + elementCol];
 	}
 	outputMatrix[elementRow*numberColsMatrixTwo + elementCol] = value;
-}
-	// int col;
-	// while(row < numberRowsMatrixOne){
-	// 	for(col = 0; col < numberColsMatrixTwo; col++){
-	// 		multiplyAux(row, col);
-	// 	}
-	// 	row = row + numberOfProcesses; // permite que os processos trabalhem de forma proporcional
-	// }
-	// shmdt(outputMatrix);
-
-
-void multiplyAux(int row, int col){
-	int i, value = 0;
-	for (i = 0; i < numberColsMatrixOne; i++){
-		value = value + matrixOne[row * numberColsMatrixOne + i] +
-				matrixTwo[i * numberColsMatrixTwo + col];
-	}
-	printf("valor %i\n", value);
-	outputMatrix[row * numberColsMatrixTwo + col] = value;
-	printf("matriz %i\n", outputMatrix[row * numberColsMatrixTwo + col]);
 }
 
 // creating and filling matrixes
@@ -193,20 +162,26 @@ void loadMatrixValues(){
 }
 
 void printMatrix(){
+	//PRINT OUTPUT MATRIX
+	outputMatrix = (int*) shmat(segmentId, NULL, 0);
 	int i, j;
 	for(i = 0; i < numberRowsMatrixOne; i++){
-		for(j = 0; j < numberColsMatrixOne; j++){
+		for(j = 0; j < numberColsMatrixTwo; j++){
 			printf("lala\n");
-			printf("%i\n", outputMatrix[i*numberColsMatrixOne + j] );
+			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j] );
 		}
 	}
+	shmdt(outputMatrix);
 
+	// PRINT MATRIX ONE
 	// int i, j;
 	// for(i = 0; i < numberRowsMatrixOne; i++){
 	// 	for(j = 0; j < numberColsMatrixOne; j++){
 	// 		printf("%d\n", matrixOne[i*numberColsMatrixOne + j] );
 	// 	}
 	// }
+
+	// PRINT MATRIX TWO
 	// for(i = 0; i < numberRowsMatrixTwo; i++){
 	// 	for(j = 0; j < numberColsMatrixTwo; j++){
 	// 		printf("%d\n", matrixTwo[i*numberColsMatrixTwo + j]);
