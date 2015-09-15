@@ -98,27 +98,30 @@ int main(int argc, char *argv[]){
 	int status, p;
 	for (p = 0; p < numberOfProcesses; ++p)
 		wait(&status);
-	outputMatrix = (int *) shmat(segmentId, NULL, 0);
-	printMatrix();
-	shmdt(outputMatrix);
+
+	saveResults();
+
+	// outputMatrix = (int *) shmat(segmentId, NULL, 0);
+	// printMatrix();
+	// shmdt(outputMatrix);
 	//saveResults();
 	return 0;
 }
 
-// void saveResults(){
-// 	outputMatrix = (int *) shmat(segmentId, NULL, 0);
-// 	fprintf(outputFileResultMatrix, "LINHAS = %d\nCOLUNAS = %d\n", numberRowsMatrixOne, numberColsMatrixTwo);
-// 	int i, j;
-// 	for (i = 0; i < numberRowsMatrixOne; i++){
-// 		for (j = 0; j < numberColsMatrixTwo; j++){
-// 			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j]);
-// 			fprintf(outputFileResultMatrix, "%d", outputMatrix[i*numberColsMatrixTwo + j]);
-// 		}
-// 		fprintf(outputFileResultMatrix, "\n");
-// 	}
-// 	shmdt(outputMatrix);
-// 	shmctl(segmentId, IPC_RMID, NULL);
-// }
+void saveResults(){
+	outputMatrix = (int *) shmat(segmentId, NULL, 0);
+	fprintf(outputFileResultMatrix, "LINHAS = %d\nCOLUNAS = %d\n", numberRowsMatrixOne, numberColsMatrixTwo);
+	int i, j;
+	for (i = 0; i < numberRowsMatrixOne; i++){
+		for (j = 0; j < numberColsMatrixTwo; j++){
+			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j]);
+			fprintf(outputFileResultMatrix, "%d", outputMatrix[i*numberColsMatrixTwo + j]);
+		}
+		fprintf(outputFileResultMatrix, "\n");
+	}
+	shmdt(outputMatrix);
+	//shmctl(segmentId, IPC_RMID, NULL);
+}
 
 
 void apllyMatrixMultiplication(int element){
@@ -167,7 +170,6 @@ void printMatrix(){
 	int i, j;
 	for(i = 0; i < numberRowsMatrixOne; i++){
 		for(j = 0; j < numberColsMatrixTwo; j++){
-			printf("lala\n");
 			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j] );
 		}
 	}
