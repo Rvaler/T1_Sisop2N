@@ -12,17 +12,15 @@ ambientes Unix (Linux) mesmo que tenham sido desenvolvidos sobre outras platafor
 */
 
 
-
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h> /* for pid_t */
-#include <sys/wait.h> /* for wait */
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/shm.h> 
 #include <sys/stat.h>
+#include <string.h>
+// #include <unistd.h>
+#include <sys/types.h> 
+#include <sys/wait.h> 
+
 
 FILE *inFileMatrixOne, *inFileMatrixTwo, *outputFileResultMatrix;
 
@@ -31,10 +29,7 @@ int numberOfProcesses; // indicated in the call
 int segmentId;
 int *matrixOne, *matrixTwo, *outputMatrix;
 
-
-
 void loadMatrixValues(void);
-void printMatrix(void);
 void apllyMatrixMultiplication(int row);
 void multiplyAux(int row, int col);
 void saveResults();
@@ -71,7 +66,6 @@ int main(int argc, char *argv[]){
 	}
 
 	loadMatrixValues();
-
 	segmentId = shmget(IPC_PRIVATE, sizeof((*outputMatrix) * numberRowsMatrixOne * numberColsMatrixTwo), S_IRUSR | S_IWUSR);
 	
 	int childController = 0;
@@ -89,25 +83,19 @@ int main(int argc, char *argv[]){
 			exit(0);
 		}
 	}
-	// isso n da certo
-	// if (childController == numberOfProcesses){
-	// 	printf("ENTROU\n");
-	// 	saveResults();
-	// }
 
+	// wait for all processes to end execution
 	int status, p;
 	for (p = 0; p < numberOfProcesses; ++p)
 		wait(&status);
 
 	saveResults();
-
-	// outputMatrix = (int *) shmat(segmentId, NULL, 0);
-	// printMatrix();
-	// shmdt(outputMatrix);
-	//saveResults();
 	return 0;
 }
 
+
+
+// save the output resulted matrix into the out.txt file
 void saveResults(){
 	outputMatrix = (int *) shmat(segmentId, NULL, 0);
 	fprintf(outputFileResultMatrix, "LINHAS = %d\nCOLUNAS = %d\n", numberRowsMatrixOne, numberColsMatrixTwo);
@@ -115,23 +103,24 @@ void saveResults(){
 	for (i = 0; i < numberRowsMatrixOne; i++){
 		for (j = 0; j < numberColsMatrixTwo; j++){
 			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j]);
-			fprintf(outputFileResultMatrix, "%d", outputMatrix[i*numberColsMatrixTwo + j]);
+			fprintf(outputFileResultMatrix, "%d ", outputMatrix[i*numberColsMatrixTwo + j]);
 		}
 		fprintf(outputFileResultMatrix, "\n");
 	}
 	shmdt(outputMatrix);
-	//shmctl(segmentId, IPC_RMID, NULL);
+	shmctl(segmentId, IPC_RMID, NULL);
 }
 
-
-void apllyMatrixMultiplication(int element){
+// for each line of matrix one, a process will get the line and calculate its multiplication with the respective matrix two colunm
+void apllyMatrixMultiplication(int currentRowMatrixOne){
 	outputMatrix = (int*) shmat(segmentId, NULL, 0);
 
-	while(element < numberRowsMatrixOne*numberColsMatrixTwo){
-		int elementCol = element % numberColsMatrixTwo;
-		int elementRow = element / numberRowsMatrixOne;
-		multiplyElement(elementRow, elementCol);
-		element += numberOfProcesses;
+	while(currentRowMatrixOne < numberRowsMatrixOne){
+		int currentColMatrixTwo;
+		for (currentColMatrixTwo = 0; currentColMatrixTwo < numberColsMatrixTwo; currentColMatrixTwo++){
+			multiplyElement (currentRowMatrixOne, currentColMatrixTwo);
+		}
+		currentRowMatrixOne++;
 	}
 	shmdt(outputMatrix);
 }
@@ -164,29 +153,3 @@ void loadMatrixValues(){
 	}
 }
 
-void printMatrix(){
-	//PRINT OUTPUT MATRIX
-	outputMatrix = (int*) shmat(segmentId, NULL, 0);
-	int i, j;
-	for(i = 0; i < numberRowsMatrixOne; i++){
-		for(j = 0; j < numberColsMatrixTwo; j++){
-			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j] );
-		}
-	}
-	shmdt(outputMatrix);
-
-	// PRINT MATRIX ONE
-	// int i, j;
-	// for(i = 0; i < numberRowsMatrixOne; i++){
-	// 	for(j = 0; j < numberColsMatrixOne; j++){
-	// 		printf("%d\n", matrixOne[i*numberColsMatrixOne + j] );
-	// 	}
-	// }
-
-	// PRINT MATRIX TWO
-	// for(i = 0; i < numberRowsMatrixTwo; i++){
-	// 	for(j = 0; j < numberColsMatrixTwo; j++){
-	// 		printf("%d\n", matrixTwo[i*numberColsMatrixTwo + j]);
-	// 	}
-	// }
-}
