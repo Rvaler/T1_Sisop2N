@@ -17,9 +17,10 @@ ambientes Unix (Linux) mesmo que tenham sido desenvolvidos sobre outras platafor
 #include <sys/shm.h> 
 #include <sys/stat.h>
 #include <string.h>
-// #include <unistd.h>
 #include <sys/types.h> 
 #include <sys/wait.h> 
+#include <unistd.h>
+
 
 
 FILE *inFileMatrixOne, *inFileMatrixTwo, *outputFileResultMatrix;
