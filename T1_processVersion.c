@@ -69,7 +69,6 @@ int main(int argc, char *argv[]){
 	loadMatrixValues();
 	segmentId = shmget(IPC_PRIVATE, sizeof((*outputMatrix) * numberRowsMatrixOne * numberColsMatrixTwo), S_IRUSR | S_IWUSR);
 	
-	int childController = 0;
 	int i;
 	for (i = 0; i < numberOfProcesses; i++){
 		pid_t forkPid;

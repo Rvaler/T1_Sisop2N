@@ -22,6 +22,9 @@ int numberRowsMatrixOne, numberColsMatrixOne, numberRowsMatrixTwo, numberColsMat
 int numberOfThreads; // indicated in the call
 
 void loadMatrixValues(void);
+void saveResults(void);
+void *apllyMatrixMultiplication(void *row);
+void multiplyElement(int elementRow, int elementCol);
 
 int main(int argc, char *argv[]){
 
@@ -54,6 +57,63 @@ int main(int argc, char *argv[]){
 	}
 	loadMatrixValues();
 
+	int i;
+	pthread_t threadsArray[numberOfThreads];
+	for (i = 0; i < numberOfThreads; i++){
+		int *threadNumber = malloc(sizeof(int));
+		if (threadNumber != NULL){
+			*threadNumber = i;
+			pthread_t th;
+			pthread_create(&th, NULL, apllyMatrixMultiplication, (void *)threadNumber);
+			threadsArray[i] = th;	
+		}else{
+			printf("Could not alloc threadNumber\n");
+		}
+	}
+
+
+	int t;
+	for (t = 0; t < numberOfThreads; t++){
+		pthread_join(threadsArray[t],NULL); 
+	}
+
+	printf("acabou\n");
+	saveResults();
+}
+
+
+void *apllyMatrixMultiplication(void *row){
+	int currentRowMatrixOne = *(int *) row;
+	while(currentRowMatrixOne < numberRowsMatrixOne){
+		int currentColMatrixTwo;
+		for (currentColMatrixTwo = 0; currentColMatrixTwo < numberColsMatrixTwo; currentColMatrixTwo++){
+			multiplyElement (currentRowMatrixOne, currentColMatrixTwo);
+		}
+		currentRowMatrixOne++;
+	}
+	printf("thread %i acabando\n", *(int *)row);
+}
+
+void multiplyElement(int elementRow, int elementCol){
+	int i, j, value = 0;
+	for(i = 0; i < numberColsMatrixOne; i++){
+		value += matrixOne[elementRow*numberColsMatrixOne + i] * 
+				 matrixTwo[i*numberColsMatrixTwo + elementCol];
+	}
+	outputMatrix[elementRow*numberColsMatrixTwo + elementCol] = value;
+}
+
+void saveResults(){
+	
+	fprintf(outputFileResultMatrix, "LINHAS = %d\nCOLUNAS = %d\n", numberRowsMatrixOne, numberColsMatrixTwo);
+	int i, j;
+	for (i = 0; i < numberRowsMatrixOne; i++){
+		for (j = 0; j < numberColsMatrixTwo; j++){
+			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j]);
+			fprintf(outputFileResultMatrix, "%d ", outputMatrix[i*numberColsMatrixTwo + j]);
+		}
+		fprintf(outputFileResultMatrix, "\n");
+	}
 }
 
 
@@ -62,6 +122,7 @@ void loadMatrixValues(){
 
 	matrixOne = malloc(sizeof(*matrixOne) * numberRowsMatrixOne * numberColsMatrixOne);
 	matrixTwo = malloc(sizeof(*matrixTwo) * numberRowsMatrixTwo * numberColsMatrixTwo);
+	outputMatrix = malloc(sizeof(int *) * numberRowsMatrixOne * numberColsMatrixTwo);
 
 	int i, j;
 	for(i = 0; i < numberRowsMatrixOne; i++){
