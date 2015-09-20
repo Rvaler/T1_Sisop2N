@@ -71,17 +71,16 @@ int main(int argc, char *argv[]){
 		}
 	}
 
-
+	// used to wait for all threads to end, and then save the results
 	int t;
 	for (t = 0; t < numberOfThreads; t++){
 		pthread_join(threadsArray[t],NULL); 
 	}
 
-	printf("acabou\n");
 	saveResults();
 }
 
-
+// each thread will take one line of the first matrix and multiply with the correspont colunm of matrix two
 void *apllyMatrixMultiplication(void *row){
 	int currentRowMatrixOne = *(int *) row;
 	while(currentRowMatrixOne < numberRowsMatrixOne){
@@ -91,7 +90,6 @@ void *apllyMatrixMultiplication(void *row){
 		}
 		currentRowMatrixOne++;
 	}
-	printf("thread %i acabando\n", *(int *)row);
 }
 
 void multiplyElement(int elementRow, int elementCol){
@@ -103,6 +101,7 @@ void multiplyElement(int elementRow, int elementCol){
 	outputMatrix[elementRow*numberColsMatrixTwo + elementCol] = value;
 }
 
+// save result of multiplication in the output file
 void saveResults(){
 	
 	fprintf(outputFileResultMatrix, "LINHAS = %d\nCOLUNAS = %d\n", numberRowsMatrixOne, numberColsMatrixTwo);

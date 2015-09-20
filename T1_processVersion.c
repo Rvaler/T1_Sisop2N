@@ -78,7 +78,6 @@ int main(int argc, char *argv[]){
 			return -1;
 
 		}else if(forkPid == 0){ // child process
-			printf("Im a child\n");
 			apllyMatrixMultiplication(i);
 			exit(0);
 		}
