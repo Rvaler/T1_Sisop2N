@@ -108,7 +108,6 @@ void saveResults(){
 	int i, j;
 	for (i = 0; i < numberRowsMatrixOne; i++){
 		for (j = 0; j < numberColsMatrixTwo; j++){
-			printf("%i\n", outputMatrix[i*numberColsMatrixTwo + j]);
 			fprintf(outputFileResultMatrix, "%d ", outputMatrix[i*numberColsMatrixTwo + j]);
 		}
 		fprintf(outputFileResultMatrix, "\n");
