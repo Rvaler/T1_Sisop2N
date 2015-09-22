@@ -28,6 +28,7 @@ void multiplyElement(int elementRow, int elementCol);
 
 int main(int argc, char *argv[]){
 
+	// check parameters 
 	if (argv[1] == NULL){
 		printf("Error - Must indicate the number of threads in terminal line \n");
 		return -1;
@@ -63,9 +64,10 @@ int main(int argc, char *argv[]){
 		int *threadNumber = malloc(sizeof(int));
 		if (threadNumber != NULL){
 			*threadNumber = i;
-			pthread_t th;
-			pthread_create(&th, NULL, apllyMatrixMultiplication, (void *)threadNumber);
-			threadsArray[i] = th;	
+			pthread_create(&threadsArray[*threadNumber], NULL, apllyMatrixMultiplication, (void*)threadNumber);
+			//pthread_t th;
+			//pthread_create(&th, NULL, apllyMatrixMultiplication, (void *)threadNumber);
+			//threadsArray[i] = th;	
 		}else{
 			printf("Could not alloc threadNumber\n");
 		}
@@ -88,7 +90,7 @@ void *apllyMatrixMultiplication(void *row){
 		for (currentColMatrixTwo = 0; currentColMatrixTwo < numberColsMatrixTwo; currentColMatrixTwo++){
 			multiplyElement (currentRowMatrixOne, currentColMatrixTwo);
 		}
-		currentRowMatrixOne++;
+		currentRowMatrixOne += numberOfThreads;
 	}
 }
 
@@ -118,9 +120,9 @@ void saveResults(){
 // creating and filling matrixes
 void loadMatrixValues(){
 
-	matrixOne = malloc(sizeof(*matrixOne) * numberRowsMatrixOne * numberColsMatrixOne);
-	matrixTwo = malloc(sizeof(*matrixTwo) * numberRowsMatrixTwo * numberColsMatrixTwo);
-	outputMatrix = malloc(sizeof(int *) * numberRowsMatrixOne * numberColsMatrixTwo);
+	matrixOne = (int *)malloc(sizeof(int) * numberRowsMatrixOne * numberColsMatrixOne);
+	matrixTwo = (int *)malloc(sizeof(int) * numberRowsMatrixTwo * numberColsMatrixTwo);
+	outputMatrix = (int *)malloc(sizeof(int) * numberRowsMatrixOne * numberColsMatrixTwo);
 
 	int i, j;
 	for(i = 0; i < numberRowsMatrixOne; i++){

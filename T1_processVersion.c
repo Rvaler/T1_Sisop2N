@@ -42,7 +42,9 @@ int main(int argc, char *argv[]){
 		printf("Error - Must indicate the number of processes in terminal line \n");
 		return -1;
 	}
+
 	sscanf(argv[1], "%d", &numberOfProcesses);
+	
 	if (numberOfProcesses <= 0){
 		printf("Error - number of processes must be greater than 0. \n");
 		return -1;
@@ -67,7 +69,7 @@ int main(int argc, char *argv[]){
 	}
 
 	loadMatrixValues();
-	segmentId = shmget(IPC_PRIVATE, sizeof((*outputMatrix) * numberRowsMatrixOne * numberColsMatrixTwo), S_IRUSR | S_IWUSR);
+	segmentId = shmget(IPC_PRIVATE, (sizeof(int) * numberRowsMatrixOne * numberColsMatrixTwo), S_IRUSR | S_IWUSR);
 	
 	int i;
 	for (i = 0; i < numberOfProcesses; i++){
@@ -118,7 +120,7 @@ void apllyMatrixMultiplication(int currentRowMatrixOne){
 		for (currentColMatrixTwo = 0; currentColMatrixTwo < numberColsMatrixTwo; currentColMatrixTwo++){
 			multiplyElement (currentRowMatrixOne, currentColMatrixTwo);
 		}
-		currentRowMatrixOne++;
+		currentRowMatrixOne += numberOfProcesses;
 	}
 	shmdt(outputMatrix);
 }
@@ -135,8 +137,8 @@ void multiplyElement(int elementRow, int elementCol){
 // creating and filling matrixes
 void loadMatrixValues(){
 
-	matrixOne = malloc(sizeof(*matrixOne) * numberRowsMatrixOne * numberColsMatrixOne);
-	matrixTwo = malloc(sizeof(*matrixTwo) * numberRowsMatrixTwo * numberColsMatrixTwo);
+	matrixOne = (int *)malloc(sizeof(int) * numberRowsMatrixOne * numberColsMatrixOne);
+	matrixTwo = (int *)malloc(sizeof(int) * numberRowsMatrixTwo * numberColsMatrixTwo);
 
 	int i, j;
 	for(i = 0; i < numberRowsMatrixOne; i++){
