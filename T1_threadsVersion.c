@@ -2,8 +2,8 @@
 TRABALHO 1 - SISOP 2 N
 
 Rafael Valer - 220489
-Rodrigo Boos - 
-Luis Felipe Polo -
+Rodrigo Boos - 221065
+Luis Felipe Polo - 218327
 
 O trabalho consiste em implementar em C (não em C++) um programa concorrente para multiplicação de
 matrizes. O programa deve ser implementado em duas versões diferentes, uma delas utilizando
